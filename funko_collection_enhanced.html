@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Funko Pop Collection Manager</title>
+<style>
+  body {
+    margin: 0;
+    background: #1b1b1b;
+    font-family: Arial, sans-serif;
+    color: #ddd;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    background: #222;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+  }
+  header button {
+    background: #444;
+    color: #eee;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    user-select: none;
+  }
+  header button:hover {
+    background: #666;
+  }
+  .container {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+  }
+  /* Catalog styles */
+  .catalog {
+    width: 300px;
+    background: #2a2a2a;
+    padding: 10px;
+    border-radius: 8px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .catalog h3 {
+    margin: 0 0 10px;
+    color: #eee;
+    text-align: center;
+  }
+  .filter-group {
+    margin-bottom: 10px;
+  }
+  select {
+    width: 100%;
+    padding: 6px;
+    border-radius: 6px;
+    border: none;
+    font-size: 14px;
+    background: #444;
+    color: #eee;
+    cursor: pointer;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.7);
+    user-select: none;
+  }
+  select:hover {
+    background: #555;
+  }
+  .catalog-list {
+    flex-grow: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+  .pop {
+    width: 120px;
+    height: 200px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(255,255,255,0.3);
+    text-align: center;
+    font-size: 11px;
+    color: #000;
+    cursor: grab;
+    user-select: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 6px;
+    box-sizing: border-box;
+    transition: transform 0.2s;
+    position: relative;
+  }
+  .pop:hover {
+    transform: scale(1.05);
+  }
+  .pop img {
+    width: 108px;
+    height: 140px;
+    object-fit: contain;
+    object-position: center;
+    margin-bottom: 6px;
+    pointer-events: none;
+    user-select: none;
+    border-radius: 4px;
+    background: #f8f8f8;
+    border: 1px solid #eee;
+  }
+  .pop-name {
+    font-weight: bold;
+    line-height: 1.2;
+    margin-bottom: 4px;
+    min-height: 24px;
+    max-height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 10px;
+    width: 100%;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    hyphens: auto;
+  }
+  .pop-number {
+    font-size: 9px;
+    color: #666;
+    font-weight: normal;
+    height: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: auto;
+  }
+  
+  /* Collection add button on catalog pops */
+  .pop-collection-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 20px;
+    height: 20px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+  .pop-collection-btn:hover {
+    background: #45a049;
+    transform: scale(1.1);
+  }
+  .pop:hover .pop-collection-btn {
+    display: flex;
+  }
+  
+  /* Shelves container */
+  .shelves-container {
+    flex-grow: 1;
+    background: #222;
+    padding: 15px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  .shelves-controls {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 10px;
+  }
+  .shelves-controls button {
+    background: #444;
+    border-radius: 6px;
+    border: none;
+    color: #eee;
+    cursor: pointer;
+    padding: 6px 12px;
+    user-select: none;
+  }
+  .shelves-controls button:hover {
+    background: #666;
+  }
+  .shelf {
+    background: #2a2a2a;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(255,255,255,0.2);
+    min-height: 220px;
+    padding: 10px;
+    display: grid;
+    gap: 10px;
+    grid-auto-flow: column;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    align-items: center;
+    user-select: none;
+    position: relative;
+  }
+  
+  .shelf-container {
+    position: relative;
+    margin-bottom: 15px;
+  }
+  
+  .shelf-controls {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    background: #333;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  
+  .shelf-control-btn {
+    background: #444;
+    border: none;
+    color: #eee;
+    width: 30px;
+    height: 25px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background 0.2s;
+  }
+  
+  .shelf-control-btn:hover {
+    background: #666;
+  }
+  
+  .shelf-control-btn:first-child {
+    border-bottom: 1px solid #555;
+  }
+  
+  .shelf-label {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    background: rgba(0,0,0,0.7);
+    color: #eee;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    z-index: 5;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .shelf-label:hover {
+    background: rgba(0,0,0,0.9);
+  }
+  .shelf-label input {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid #555;
+    color: #eee;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+    width: 120px;
+  }
+  
+  .shelf.dragover {
+    outline: 3px dashed #8af;
+  }
+  .shelf-slot {
+    background: #3a3a3a;
+    border-radius: 6px;
+    height: 200px;
+    width: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    cursor: pointer;
+    position: relative;
+    border: 2px dashed #555;
+  }
+  .shelf-slot:empty:before {
+    content: "Empty";
+    color: #777;
+    font-size: 12px;
+  }
+  .shelf-slot.dragover-slot {
+    outline: 3px dashed #48a;
+    background-color: #4a4a6a;
+  }
+  .drag-placeholder {
+    width: 120px;
+    height: 200px;
+    border: 2px dashed #8af;
+    border-radius: 8px;
+    box-sizing: border-box;
+  }
+  
+  /* Collections Panel */
+  .collections-panel {
+    width: 300px;
+    background: #2a2a2a;
+    padding: 10px;
+    border-radius: 8px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .collections-panel h3 {
+    margin: 0 0 10px;
+    color: #eee;
+    text-align: center;
+  }
+  .collections-header {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+  }
+  .collections-header input {
+    flex: 1;
+    padding: 6px;
+    border-radius: 6px;
+    border: none;
+    background: #444;
+    color: #eee;
+    font-size: 14px;
+  }
+  .collections-header button {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  .collections-header button:hover {
+    background: #45a049;
+  }
+  .collection-item {
+    background: #333;
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 2px solid transparent;
+  }
+  .collection-item:hover {
+    background: #3a3a3a;
+  }
+  .collection-item.active {
+    border-color: #4CAF50;
+    background: #3a4a3a;
+  }
+  .collection-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+  }
+  .collection-name {
+    font-weight: bold;
+    color: #eee;
+    font-size: 14px;
+  }
+  .collection-count {
+    color: #888;
+    font-size: 12px;
+  }
+  .collection-delete {
+    background: #d32f2f;
+    color: white;
+    border: none;
+    padding: 2px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+  }
+  .collection-delete:hover {
+    background: #b71c1c;
+  }
+  .collection-pops {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 8px;
+  }
+  .collection-pop-mini {
+    width: 50px;
+    height: 70px;
+    background: #fff;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    color: #000;
+    padding: 2px;
+    position: relative;
+  }
+  .collection-pop-mini img {
+    width: 40px;
+    height: 50px;
+    object-fit: contain;
+    border-radius: 2px;
+  }
+  .collection-pop-remove {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: #d32f2f;
+    color: white;
+    border: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    font-size: 10px;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+  .collection-pop-mini:hover .collection-pop-remove {
+    display: flex;
+  }
+  
+  .version-label {
+    font-size: 12px;
+    text-align: center;
+    color: #888;
+    padding: 8px 0 4px 0;
+    user-select: none;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <button id="resetBtn" title="Reset layout">Reset</button>
+  <button id="addShelfBtn" title="Add Shelf">Add Shelf +</button>
+  <button id="removeShelfBtn" title="Remove Shelf">Remove Shelf -</button>
+  <button id="saveLayoutBtn" title="Save Current Layout">💾 Save Layout</button>
+  <button id="loadLayoutBtn" title="Load Saved Layout">📂 Load Layout</button>
+</header>
+
+<div class="container">
+  <aside class="catalog" aria-label="Funko Pop Catalog">
+    <h3>Pop Catalog</h3>
+    <div class="filter-group">
+      <label for="filterSet">Filter by Set:</label>
+      <select id="filterSet" aria-controls="catalogList">
+        <option value="all">All Sets</option>
+      </select>
+    </div>
+    <div id="catalogList" class="catalog-list" role="list"></div>
+  </aside>
+
+  <main class="shelves-container" aria-label="Funko Pop Shelves" id="shelvesContainer">
+    <!-- Shelves get dynamically inserted here -->
+  </main>
+  
+  <aside class="collections-panel" aria-label="Collections & Wishlists">
+    <h3>Collections</h3>
+    <div class="collections-header">
+      <input type="text" id="newCollectionName" placeholder="Collection name..." />
+      <button id="addCollectionBtn">+</button>
+    </div>
+    <div id="collectionsList"></div>
+  </aside>
+</div>
+
+<div class="version-label">v4.0 - Named Shelves, Collections & Save/Load</div>
+
+<script>
+  // Pop data
+  const popsData = [
+    { id: "dsupreme", name: "Doctor Strange Supreme", number: "#874", img: "1.png", set: "What If?" },
+    { id: "zf", name: "Zombie Falcon", number: "#942", img: "2.png", set: "What If?" },
+    { id: "daryl", name: "Daryl Dixon", number: "#145", img: "3.png", set: "The Walking Dead" },
+    { id: "pennywise", name: "Pennywise (Chase)", number: "#472", img: "4.png", set: "IT" },
+    { id: "carl", name: "Carl", number: "#97", img: "5.png", set: "The Walking Dead" },
+    { id: "eleven eggos", name: "Eleven with Eggos", number: "#421", img: "6.png", set: "Stranger Things" },
+    { id: "michonne", name: "Michonne", number: "#38", img: "7.png", set: "The Walking Dead" },
+    { id: "glenn", name: "Prison Glenn Rhee", number: "#151", img: "8.png", set: "The Walking Dead" },
+    { id: "carol", name: "Carol", number: "#156", img: "9.png", set: "The Walking Dead" },
+    { id: "Sasha", name: "Sasha", number: "#577", img: "10.png", set: "The Walking Dead" },
+    { id: "tyreese", name: "Tyreese", number: "#152", img: "11.png", set: "The Walking Dead" },
+    { id: "richard", name: "Richard", number: "#575", img: "12.png", set: "The Walking Dead" },
+    { id: "hershel", name: "Hershel Greene", number: "#153", img: "13.png", set: "The Walking Dead" },
+    { id: "Negan", name: "Negan", number: "#390", img: "14.png", set: "The Walking Dead" },
+    { id: "merle", name: "Merle Dixon", number: "#69", img: "15.png", set: "The Walking Dead" },
+    { id: "Alpha", name: "Alpha", number: "#890", img: "16.png", set: "The Walking Dead" },
+    { id: "killmonger", name: "Erik Killmonger", number: "#278", img: "17.png", set: "Black Panther" },
+    { id: "nakia", name: "Nakia", number: "#385", img: "18.png", set: "Black Panther" },
+    { id: "okoye", name: "Okoye", number: "#385", img: "19.png", set: "Black Panther" },
+    { id: "bp", name: "Black Panther", number: "#274", img: "20.png", set: "Black Panther" },
+    { id: "M'baku", name: "M'baku", number: "#388", img: "21.png", set: "Black Panther" },
+    { id: "M'baku art series", name: "M'baku", number: "#67", img: "22.png", set: "Black Panther" },
+    { id: "shuri art series", name: "Shuri", number: "#69", img: "23.png", set: "Black Panther" },
+    { id: "bp diecast", name: "Black Panther", number: "#06", img: "24.png", set: "MARVEL" },
+  ];
+
+  const catalogList = document.getElementById("catalogList");
+  const filterSet = document.getElementById("filterSet");
+  const shelvesContainer = document.getElementById("shelvesContainer");
+  const collectionsList = document.getElementById("collectionsList");
+  const newCollectionName = document.getElementById("newCollectionName");
+
+  // State
+  let shelves = [];
+  let collections = [];
+  let activeCollectionId = null;
+
+  // Pop elements cache
+  const popElements = {};
+  popsData.forEach(pop => {
+    const div = document.createElement("div");
+    div.className = "pop";
+    div.draggable = true;
+    div.dataset.id = pop.id;
+    div.title = `${pop.name} ${pop.number}`;
+    
+    const img = document.createElement("img");
+    img.src = pop.img;
+    img.alt = `${pop.name} ${pop.number}`;
+    img.onerror = function() {
+      this.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjI0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5OTkiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
+    };
+    
+    const addToCollectionBtn = document.createElement("button");
+    addToCollectionBtn.className = "pop-collection-btn";
+    addToCollectionBtn.innerHTML = "+";
+    addToCollectionBtn.title = "Add to active collection";
+    addToCollectionBtn.onclick = (e) => {
+      e.stopPropagation();
+      addPopToActiveCollection(pop.id);
+    };
+    
+    const nameDiv = document.createElement("div");
+    nameDiv.className = "pop-name";
+    nameDiv.textContent = pop.name;
+    
+    const numberDiv = document.createElement("div");
+    numberDiv.className = "pop-number";
+    numberDiv.textContent = pop.number;
+    
+    div.appendChild(addToCollectionBtn);
+    div.appendChild(img);
+    div.appendChild(nameDiv);
+    div.appendChild(numberDiv);
+    
+    div.addEventListener("dragstart", dragStart);
+    div.addEventListener("dragend", dragEnd);
+    popElements[pop.id] = div;
+  });
+
+  // Collections Functions
+  function addPopToActiveCollection(popId) {
+    if (!activeCollectionId) {
+      alert("Please select a collection first!");
+      return;
+    }
+    const collection = collections.find(c => c.id === activeCollectionId);
+    if (collection && !collection.pops.includes(popId)) {
+      collection.pops.push(popId);
+      renderCollections();
+      saveToStorage();
+    }
+  }
+
+  function removePopFromCollection(collectionId, popId) {
+    const collection = collections.find(c => c.id === collectionId);
+    if (collection) {
+      collection.pops = collection.pops.filter(p => p !== popId);
+      renderCollections();
+      saveToStorage();
+    }
+  }
+
+  function createCollection(name) {
+    if (!name.trim()) return;
+    const id = `collection-${Date.now()}`;
+    collections.push({
+      id,
+      name: name.trim(),
+      pops: [],
+      dateCreated: new Date().toISOString()
+    });
+    activeCollectionId = id;
+    renderCollections();
+    saveToStorage();
+  }
+
+  function deleteCollection(collectionId) {
+    if (confirm("Delete this collection?")) {
+      collections = collections.filter(c => c.id !== collectionId);
+      if (activeCollectionId === collectionId) {
+        activeCollectionId = collections.length > 0 ? collections[0].id : null;
+      }
+      renderCollections();
+      saveToStorage();
+    }
+  }
+
+  function setActiveCollection(collectionId) {
+    activeCollectionId = collectionId;
+    renderCollections();
+  }
+
+  function renderCollections() {
+    collectionsList.innerHTML = "";
+    collections.forEach(collection => {
+      const item = document.createElement("div");
+      item.className = "collection-item";
+      if (collection.id === activeCollectionId) {
+        item.classList.add("active");
+      }
+      
+      const header = document.createElement("div");
+      header.className = "collection-header";
+      
+      const nameSpan = document.createElement("span");
+      nameSpan.className = "collection-name";
+      nameSpan.textContent = collection.name;
+      
+      const countSpan = document.createElement("span");
+      countSpan.className = "collection-count";
+      countSpan.textContent = `${collection.pops.length} pops`;
+      
+      const deleteBtn = document.createElement("button");
+      deleteBtn.className = "collection-delete";
+      deleteBtn.textContent = "Delete";
+      deleteBtn.onclick = (e) => {
+        e.stopPropagation();
+        deleteCollection(collection.id);
+      };
+      
+      header.appendChild(nameSpan);
+      header.appendChild(countSpan);
+      header.appendChild(deleteBtn);
+      
+      const popsDiv = document.createElement("div");
+      popsDiv.className = "collection-pops";
+      
+      collection.pops.forEach(popId => {
+        const popData = popsData.find(p => p.id === popId);
+        if (popData) {
+          const miniPop = document.createElement("div");
+          miniPop.className = "collection-pop-mini";
+          miniPop.title = popData.name;
+          
+          const img = document.createElement("img");
+          img.src = popData.img;
+          img.alt = popData.name;
+          
+          const removeBtn = document.createElement("button");
+          removeBtn.className = "collection-pop-remove";
+          removeBtn.innerHTML = "×";
+          removeBtn.onclick = (e) => {
+            e.stopPropagation();
+            removePopFromCollection(collection.id, popId);
+          };
+          
+          miniPop.appendChild(img);
+          miniPop.appendChild(removeBtn);
+          popsDiv.appendChild(miniPop);
+        }
+      });
+      
+      item.appendChild(header);
+      item.appendChild(popsDiv);
+      item.onclick = () => setActiveCollection(collection.id);
+      collectionsList.appendChild(item);
+    });
+  }
+
+  document.getElementById("addCollectionBtn").addEventListener("click", () => {
+    const name = newCollectionName.value;
+    if (name) {
+      createCollection(name);
+      newCollectionName.value = "";
+    }
+  });
+
+  newCollectionName.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      document.getElementById("addCollectionBtn").click();
+    }
+  });
+
+  // Populate filter dropdown
+  function populateFilterOptions() {
+    const sets = Array.from(new Set(popsData.map(p => p.set))).sort();
+    sets.forEach(set => {
+      const option = document.createElement('option');
+      option.value = set;
+      option.textContent = set;
+      filterSet.appendChild(option);
+    });
+  }
+
+  // Render catalog
+  function renderCatalog(filter = "all") {
+    catalogList.innerHTML = "";
+    const popsOnShelves = new Set();
+    shelves.forEach(shelf => {
+      shelf.pops.forEach(p => { if(p) popsOnShelves.add(p); });
+    });
+
+    const filtered = filter === "all" ? popsData : popsData.filter(p => p.set === filter);
+
+    filtered.forEach(pop => {
+      if (!popsOnShelves.has(pop.id)) {
+        catalogList.appendChild(popElements[pop.id]);
+      }
+    });
+  }
+
+  // Create shelf element with editable name
+  function createShelfElement(shelfData, shelfIndex) {
+    const shelfContainer = document.createElement("div");
+    shelfContainer.className = "shelf-container";
+    
+    const shelf = document.createElement("div");
+    shelf.className = "shelf";
+    shelf.id = shelfData.id;
+    shelf.style.gridTemplateColumns = `repeat(${shelfData.slots}, 1fr)`;
+
+    const shelfLabel = document.createElement("div");
+    shelfLabel.className = "shelf-label";
+    shelfLabel.onclick = () => editShelfName(shelfData.id);
+    
+    const labelText = document.createElement("span");
+    labelText.textContent = `${shelfData.name || `Shelf ${shelfIndex + 1}`} (${shelfData.slots} slots)`;
+    shelfLabel.appendChild(labelText);
+    
+    const shelfControls = document.createElement("div");
+    shelfControls.className = "shelf-controls";
+    
+    const addSlotBtn = document.createElement("button");
+    addSlotBtn.className = "shelf-control-btn";
+    addSlotBtn.innerHTML = "+";
+    addSlotBtn.title = "Add slot to this shelf";
+    addSlotBtn.addEventListener("click", () => addSlotToShelf(shelfData.id));
+    
+    const removeSlotBtn = document.createElement("button");
+    removeSlotBtn.className = "shelf-control-btn";
+    removeSlotBtn.innerHTML = "−";
+    removeSlotBtn.title = "Remove slot from this shelf";
+    removeSlotBtn.addEventListener("click", () => removeSlotFromShelf(shelfData.id));
+    
+    shelfControls.appendChild(addSlotBtn);
+    shelfControls.appendChild(removeSlotBtn);
+
+    shelfData.pops.forEach((popId, idx) => {
+      const slot = document.createElement("div");
+      slot.className = "shelf-slot";
+      slot.dataset.shelf = shelfData.id;
+      slot.dataset.slot = idx;
+
+      if (popId) {
+        const popElem = popElements[popId];
+        if (popElem) {
+          slot.appendChild(popElem);
+        }
+      }
+
+      slot.addEventListener("dragover", slotDragOver);
+      slot.addEventListener("dragleave", slotDragLeave);
+      slot.addEventListener("drop", slotDrop);
+
+      shelf.appendChild(slot);
+    });
+
+    shelfContainer.appendChild(shelfLabel);
+    shelfContainer.appendChild(shelfControls);
+    shelfContainer.appendChild(shelf);
+    
+    return shelfContainer;
+  }
+
+  function editShelfName(shelfId) {
+    const shelf = shelves.find(s => s.id === shelfId);
+    if (!shelf) return;
+    
+    const newName = prompt("Enter shelf name:", shelf.name || "");
+    if (newName !== null) {
+      shelf.name = newName.trim();
+      renderShelves();
+      saveToStorage();
+    }
+  }
+
+  function renderShelves() {
+    shelvesContainer.innerHTML = "";
+    shelves.forEach((shelf, index) => {
+      shelvesContainer.appendChild(createShelfElement(shelf, index));
+    });
+  }
+
+  function initializeShelves(count = 1, defaultSlots = 5) {
+    shelves = [];
+    for (let i = 0; i < count; i++) {
+      shelves.push({
+        id: `shelf-${i+1}`,
+        name: `Shelf ${i+1}`,
+        slots: defaultSlots,
+        pops: Array(defaultSlots).fill(null),
+      });
+    }
+  }
+
+  // Drag state
+  let draggedPop = null;
+  let draggedFrom = null;
+
+  function dragStart(e) {
+    draggedPop = e.currentTarget;
+    draggedFrom = findPopLocation(draggedPop.dataset.id);
+    e.dataTransfer.setData("text/plain", draggedPop.dataset.id);
+    e.dataTransfer.effectAllowed = "move";
+    setTimeout(() => {
+      draggedPop.style.opacity = "0.5";
+    }, 0);
+  }
+
+  function dragEnd(e) {
+    if (draggedPop) {
+      draggedPop.style.opacity = "1";
+      draggedPop = null;
+      draggedFrom = null;
+    }
+    clearDragOverHighlights();
+  }
+
+  function findPopLocation(popId) {
+    for (let shelf of shelves) {
+      const idx = shelf.pops.indexOf(popId);
+      if (idx !== -1) return {type: "shelf", shelfId: shelf.id, slot: idx};
+    }
+    return {type: "catalog"};
+  }
+
+  function clearDragOverHighlights() {
+    document.querySelectorAll(".shelf-slot.dragover-slot").forEach(el => {
+      el.classList.remove("dragover-slot");
+    });
+  }
+
+  function slotDragOver(e) {
+    e.preventDefault();
+    if (!draggedPop) return;
+    clearDragOverHighlights();
+    e.currentTarget.classList.add("dragover-slot");
+  }
+  
+  function slotDragLeave(e) {
+    e.currentTarget.classList.remove("dragover-slot");
+  }
+
+  function slotDrop(e) {
+    e.preventDefault();
+    if (!draggedPop) return;
+    const targetSlot = e.currentTarget;
+    const shelfId = targetSlot.dataset.shelf;
+    const slotIndex = parseInt(targetSlot.dataset.slot);
+
+    movePopToShelfSlot(draggedPop.dataset.id, shelfId, slotIndex);
+
+    clearDragOverHighlights();
+    renderShelves();
+    renderCatalog(filterSet.value);
+    saveToStorage();
+  }
+
+  function movePopToShelfSlot(popId, targetShelfId, targetSlot) {
+    if (draggedFrom) {
+      if (draggedFrom.type === "shelf") {
+        const oldShelf = shelves.find(s => s.id === draggedFrom.shelfId);
+        if (oldShelf) {
+          oldShelf.pops[draggedFrom.slot] = null;
+        }
+      }
+    }
+
+    const targetShelf = shelves.find(s => s.id === targetShelfId);
+    if (!targetShelf) return;
+
+    const occupant = targetShelf.pops[targetSlot];
+    if (occupant) {
+      if (draggedFrom && draggedFrom.type === "shelf") {
+        const oldShelf = shelves.find(s => s.id === draggedFrom.shelfId);
+        if (oldShelf) {
+          oldShelf.pops[draggedFrom.slot] = occupant;
+        }
+      }
+    }
+
+    targetShelf.pops[targetSlot] = popId;
+  }
+
+  catalogList.addEventListener("dragover", e => {
+    e.preventDefault();
+  });
+  
+  catalogList.addEventListener("drop", e => {
+    e.preventDefault();
+    if (!draggedPop) return;
+
+    if (draggedFrom && draggedFrom.type === "shelf") {
+      const oldShelf = shelves.find(s => s.id === draggedFrom.shelfId);
+      if (oldShelf) {
+        oldShelf.pops[draggedFrom.slot] = null;
+      }
+    }
+    renderShelves();
+    renderCatalog(filterSet.value);
+    saveToStorage();
+  });
+
+  filterSet.addEventListener("change", () => {
+    renderCatalog(filterSet.value);
+  });
+
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    if (confirm("Reset all shelves? This will return all pops to the catalog.")) {
+      initializeShelves(1, 5);
+      renderShelves();
+      renderCatalog();
+      saveToStorage();
+    }
+  });
+
+  document.getElementById("addShelfBtn").addEventListener("click", () => {
+    const newShelfNum = shelves.length + 1;
+    shelves.push({
+      id: `shelf-${newShelfNum}`,
+      name: `Shelf ${newShelfNum}`,
+      slots: 5,
+      pops: Array(5).fill(null),
+    });
+    renderShelves();
+    saveToStorage();
+  });
+
+  document.getElementById("removeShelfBtn").addEventListener("click", () => {
+    if (shelves.length === 0) return;
+    if (confirm("Remove the last shelf? Pops on it will return to the catalog.")) {
+      shelves.pop();
+      renderShelves();
+      renderCatalog(filterSet.value);
+      saveToStorage();
+    }
+  });
+
+  function addSlotToShelf(shelfId) {
+    const shelf = shelves.find(s => s.id === shelfId);
+    if (shelf && shelf.slots < 15) {
+      shelf.slots++;
+      shelf.pops.push(null);
+      renderShelves();
+      saveToStorage();
+    }
+  }
+
+  function removeSlotFromShelf(shelfId) {
+    const shelf = shelves.find(s => s.id === shelfId);
+    if (shelf && shelf.slots > 1) {
+      shelf.pops.pop();
+      shelf.slots--;
+      renderShelves();
+      renderCatalog(filterSet.value);
+      saveToStorage();
+    }
+  }
+
+  // Storage functions using persistent storage
+  async function saveToStorage() {
+    try {
+      const data = {
+        shelves: shelves,
+        collections: collections,
+        activeCollectionId: activeCollectionId,
+        filter: filterSet.value,
+        lastSaved: new Date().toISOString()
+      };
+      await window.storage.set('funko-layout', JSON.stringify(data));
+    } catch (error) {
+      console.error('Save failed:', error);
+    }
+  }
+
+  async function loadFromStorage() {
+    try {
+      const result = await window.storage.get('funko-layout');
+      if (result && result.value) {
+        const data = JSON.parse(result.value);
+        shelves = data.shelves || [];
+        collections = data.collections || [];
+        activeCollectionId = data.activeCollectionId || null;
+        filterSet.value = data.filter || "all";
+        return true;
+      }
+    } catch (error) {
+      console.error('Load failed:', error);
+    }
+    return false;
+  }
+
+  document.getElementById("saveLayoutBtn").addEventListener("click", async () => {
+    await saveToStorage();
+    alert("Layout saved successfully!");
+  });
+
+  document.getElementById("loadLayoutBtn").addEventListener("click", async () => {
+    const loaded = await loadFromStorage();
+    if (loaded) {
+      renderShelves();
+      renderCatalog(filterSet.value);
+      renderCollections();
+      alert("Layout loaded successfully!");
+    } else {
+      alert("No saved layout found.");
+    }
+  });
+
+  // Initial setup
+  async function init() {
+    populateFilterOptions();
+    const loaded = await loadFromStorage();
+    if (!loaded) {
+      initializeShelves(1, 5);
+    }
+    renderShelves();
+    renderCatalog();
+    renderCollections();
+  }
+
+  init();
